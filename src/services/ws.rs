@@ -547,6 +547,8 @@ async fn get_paraformer_v2_text(
     }
 }
 
+static ERROR_BACK: &str = "抱歉，我没能理解您的回复。请您换种表达方式重新说一下";
+
 async fn submit_to_ai(
     pool: &WsPool,
     id: &str,
@@ -618,14 +620,17 @@ async fn submit_to_ai(
             Ok(StableLLMResponseChunk::Stop) => {
                 log::info!("llm done");
 
-                if !llm_response.is_empty() {
-                    chat_session.add_assistant_message(llm_response);
+                if llm_response.is_empty() {
+                    llm_response = ERROR_BACK.to_string();
                 }
+
+                chat_session.add_assistant_message(llm_response);
 
                 break;
             }
             Err(e) => {
                 log::error!("llm error: {:#?}", e);
+                chat_session.add_assistant_message(ERROR_BACK.to_string());
                 break;
             }
         }
